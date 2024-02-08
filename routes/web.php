@@ -30,7 +30,8 @@ Route::get('/create-post',[PostController::class,'showCreateForm'])->middleware(
 Route::post('/create-post',[PostController::class,'storeNewPost'])->middleware('mustBeLoggedIn');
 
 // blog post via id
-Route::get('/post/{post}',[PostController::class,'viewSinglePost']);
+Route::get('/post/{post}',[PostController::class,'viewSinglePost'])->middleware('mustBeLoggedIn');
+Route::delete('/post/{post}',[PostController::class,'deletePost'])->middleware('mustBeLoggedIn');
 
 // Profile related routes
 Route::get('/profile/{user:username}',[UserController::class,'profile'])->middleware('mustBeLoggedIn');

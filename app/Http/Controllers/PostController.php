@@ -39,5 +39,14 @@ class PostController extends Controller
         
     }
 
+    // delete post
+    public function deletePost(Post $post){
+        if(auth()->user()->cannot('delete', $post)){
+            return redirect('/')->with('error', 'You are not authorized to delete this post');
+        }
+        $post->delete();
+        return redirect('/profile/' . auth()->user()->username)->with('success', 'Post deleted successfully');
+    }
+
 
 }
