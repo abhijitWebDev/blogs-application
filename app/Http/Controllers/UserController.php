@@ -47,4 +47,9 @@ class UserController extends Controller
         }
         
     }
+
+    // get the profile
+    public function profile(User $user){
+        return view('profile-posts', ['user' => $user -> username, 'posts' => $user->posts()->latest()->get(),'postCount'=>$user->posts()->count()]);
+    }
 }
