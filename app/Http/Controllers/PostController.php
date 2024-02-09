@@ -41,11 +41,25 @@ class PostController extends Controller
 
     // delete post
     public function deletePost(Post $post){
-        if(auth()->user()->cannot('delete', $post)){
-            return redirect('/')->with('error', 'You are not authorized to delete this post');
-        }
         $post->delete();
         return redirect('/profile/' . auth()->user()->username)->with('success', 'Post deleted successfully');
+    }
+
+    //showEditForm
+    public function showEditForm(Post $post){
+        return view('edit-post', ['post' => $post]);
+    }
+
+    // update post
+    public function updatePost(Request $request, Post $post){
+        $incommingFields = $request->validate([
+            'title' => 'required|max:255',
+            'body' => 'required'
+        ]);
+        $incommingFields['title'] = strip_tags($incommingFields['title']);
+        $incommingFields['body'] = strip_tags($incommingFields['body']);
+        $post->update($incommingFields);
+        return back()->with('success', 'Post updated successfully');
     }
 
 

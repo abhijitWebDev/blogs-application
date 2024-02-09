@@ -4,6 +4,7 @@ namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
 use App\Policies\postPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -24,5 +25,8 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
+        Gate::define('VisitAdminPages', function($user){
+            return auth()->check() && auth()->user()->is_admin === 1;
+        });
     }
 }

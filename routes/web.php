@@ -1,5 +1,6 @@
 <?php
 
+use GuzzleHttp\Middleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
@@ -31,9 +32,16 @@ Route::post('/create-post',[PostController::class,'storeNewPost'])->middleware('
 
 // blog post via id
 Route::get('/post/{post}',[PostController::class,'viewSinglePost'])->middleware('mustBeLoggedIn');
-Route::delete('/post/{post}',[PostController::class,'deletePost'])->middleware('mustBeLoggedIn');
+Route::delete('/post/{post}',[PostController::class,'deletePost'])->middleware('can:delete,post');
+Route::get('/post/{post}/edit',[PostController::class,'showEditForm'])->middleware('can:update,post');
+Route::put('/post/{post}',[PostController::class,'updatePost'])->middleware('can:update,post');
 
 // Profile related routes
 Route::get('/profile/{user:username}',[UserController::class,'profile'])->middleware('mustBeLoggedIn');
+Route::get('/manage-avatar',[UserController::class,'showAvatarForm'])->middleware('mustBeLoggedIn');
+Route::Post('/manage-avatar',[UserController::class,'storeAvatar'])->middleware('mustBeLoggedIn');
 
-
+// admin route
+Route::get('/admins-only',function(){
+    return 'Only admins should be able to see this page.';
+})->middleware('can:VisitAdminPages');
