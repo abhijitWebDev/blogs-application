@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 use App\Models\User;
+use App\Models\Follow;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\View;
 use Intervention\Image\ImageManager;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -12,7 +14,7 @@ class UserController extends Controller
 {
     public function showCorrectHomepage(){
         if(auth()->check()){
-            return view('homepage-feed');
+            return view('homepage-feed',['posts'=>auth()->user()->feedPosts()->latest()->get()]);
     }
     else {
         return view('homepage');
@@ -51,10 +53,6 @@ class UserController extends Controller
         
     }
 
-    // get the profile
-    public function profile(User $user){
-        return view('profile-posts', ['avatar'=> $user -> avatar,'user' => $user -> username, 'posts' => $user->posts()->latest()->get(),'postCount'=>$user->posts()->count()]);
-    }
 
     // show the avatar form
     public function showAvatarForm(){
@@ -88,5 +86,37 @@ class UserController extends Controller
         
         // auth()->user()->update($incommingFields);
         // return redirect('/profile/'.auth()->user()->username)->with('success','Avatar uploaded successfully');
+    }
+
+    // get shared data
+    private function getSharedData($user) {
+        $currentlyFollowing = 0;
+
+        if(auth()->check()){
+            $currentlyFollowing = Follow::where([['user_id','=',auth()->user()->id],['followenduser','=',$user->id]])->count();
+        };
+
+
+        View::share('sharedData',['currentlyFollowing'=>$currentlyFollowing ,'avatar'=> $user -> avatar,'user' => $user -> username, 'postCount'=>$user->posts()->count(), 'followerCount'=>$user->followers()->count(), 'followingCount'=>$user->followings()->count()]);
+    }
+    // get the profile
+    public function profile(User $user){
+        $this->getSharedData($user);
+        
+         return view('profile-posts', [ 'posts' => $user->posts()->latest()->get()]);
+    }
+
+    // show the followers
+    public function profileFollowers(User $user){
+        $this->getSharedData($user);
+        
+        return view('profile-followers', [ 'followers' => $user->followers()->latest()->get()]);
+    }
+
+    // show the following
+
+    public function profileFollowing(User $user){
+        $this->getSharedData($user);
+        return view('profile-following', [ 'followings' => $user->followings()->latest()->get()]);
     }
 }
