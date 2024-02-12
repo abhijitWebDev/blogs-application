@@ -1,6 +1,7 @@
 <?php
 
-use GuzzleHttp\Middleware;
+use App\Events\ChatMessage;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
@@ -42,6 +43,14 @@ Route::get('/search/{searchTerm}',[PostController::class,'searchPosts'])->middle
 Route::get('/profile/{user:username}',[UserController::class,'profile'])->middleware('mustBeLoggedIn');
 Route::get('/profile/{user:username}/followers',[UserController::class,'profileFollowers'])->middleware('mustBeLoggedIn');
 Route::get('/profile/{user:username}/following',[UserController::class,'profileFollowing'])->middleware('mustBeLoggedIn');
+
+Route::middleware('cache.headers:public;max_age=20;etag')->group(function() {
+    Route::get('/profile/{user:username}/raw',[UserController::class,'profileRaw']);
+    Route::get('/profile/{user:username}/followers/raw',[UserController::class,'profileFollowersRaw']);
+    Route::get('/profile/{user:username}/following/raw',[UserController::class,'profileFollowingRaw']);
+});
+
+//Avatar routes
 Route::get('/manage-avatar',[UserController::class,'showAvatarForm'])->middleware('mustBeLoggedIn');
 Route::Post('/manage-avatar',[UserController::class,'storeAvatar'])->middleware('mustBeLoggedIn');
 
@@ -53,3 +62,16 @@ Route::get('/admins-only',function(){
 //follow related routes
 Route::post('/create-follow/{user:username}',[FollowController::class,'createFollow'])->middleware('mustBeLoggedIn');
 Route::post('/remove-follow/{user:username}',[FollowController::class,'removeFollow'])->middleware('mustBeLoggedIn');
+
+// chat related routes
+Route::Post('/send-chat-message',function(Request $request){
+    $formFeilds = request()->validate([
+        'textvalue'=>'required'
+    ]);
+    if(!trim($formFeilds['textvalue'])){
+        return response()->noContent();
+    }
+    broadcast(new ChatMessage(['username'=>auth()->user()->username,'textvalue'=>strip_tags($formFeilds['textvalue']),'avatar'=>auth()->user()->avatar]))->toOthers();
+    return response()->noContent();
+
+})->middleware('mustBeLoggedIn'); 

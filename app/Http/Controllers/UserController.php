@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Follow;
 use Illuminate\Http\Request;
+use App\Events\OurExampleEvent;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\View;
 use Intervention\Image\ImageManager;
@@ -22,6 +23,7 @@ class UserController extends Controller
 }
     //
     public function logout() {
+        event(new OurExampleEvent(['username' => auth()->user()->username, 'action'=>'logged out']));
         auth()->logout();
         return redirect('/')->with('success','You are logged out');
     }
@@ -45,6 +47,7 @@ class UserController extends Controller
         ]);
         if (auth()->attempt(['username' => $incommingFields['loginusername'], 'password' => $incommingFields['loginpassword']])) {
             $request->session()->regenerate();
+            event(new OurExampleEvent(['username' => auth()->user()->username, 'action'=>'log in']));
             return redirect('/')->with('success','you are logged in as '.$incommingFields['loginusername']);
             # code...
         } else {
@@ -118,5 +121,23 @@ class UserController extends Controller
     public function profileFollowing(User $user){
         $this->getSharedData($user);
         return view('profile-following', [ 'followings' => $user->followings()->latest()->get()]);
+    }
+
+    public function profileRaw(User $user){
+        
+        return response()->json(['theHtml' => view('profile-posts-only',['posts'=> $user->posts()->latest()->get()])->render(), 'docTitle' => $user->username . "'s Profile" ]);
+    }
+
+    // show the followers
+    public function profileFollowersRaw(User $user){
+        
+        return response()->json(['theHtml' => view('profile-followers-only',['followers'=>  $user->followers()->latest()->get()])->render(), 'docTitle' => $user->username . "'s Followers" ]);
+    }
+
+    // show the following
+
+    public function profileFollowingRaw(User $user){
+        return response()->json(['theHtml' => view('profile-followings-only',['followings'=> $user->followings()->latest()->get()])->render(), 'docTitle' => $user->username . "'s Followings" ]);
+        
     }
 }

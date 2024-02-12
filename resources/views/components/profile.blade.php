@@ -9,17 +9,17 @@
             <button class="btn btn-primary btn-sm">Follow <i class="fas fa-user-plus"></i></button>
           </form>
           @endif
-  
+
+          
           @if($sharedData['currentlyFollowing'])
           <form class="ml-2 d-inline" action="/remove-follow/{{$sharedData['user']}}" method="POST">
             @csrf
             <button class="btn btn-danger btn-sm">Stop Following <i class="fas fa-user-times"></i></button>
           </form>
-          @if(auth()->user()->username === $sharedData['user'])
+          @if(auth()->user()->username === $sharedData['user']);
           <a href="/manage-avatar" class="btn btn-secondary btn-sm">Manage Avatar</a>
           @endif
           @endif
-          
           @endauth
           
         </h2>
