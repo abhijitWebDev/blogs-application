@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use to;
 use App\Models\Post;
-use App\Mail\NewPostEmail;
+
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Jobs\sendNewPostEmail;
 use Illuminate\Support\Facades\Mail;
 
 class PostController extends Controller
@@ -29,10 +30,27 @@ class PostController extends Controller
         $incommingFields['user_id'] = auth()->id();
 
         $newPost= Post::create($incommingFields);
-        Mail::to(auth()->user()->email)->send(new NewPostEmail(['name'=>auth()->user()->username,'title'=> $newPost->title]));
+        dispatch(new sendNewPostEmail(['sendTo'=>auth()->user()->email,'name'=>auth()->user()->username,'title'=> $newPost->title]));
         return redirect("/post/{$newPost->id}")->with('success', 'Post created successfully!');
 
     }
+
+    public function storeNewPostApi(Request $request) {
+        // validate the request
+        $incommingFields = $request->validate([
+            'title' => 'required|max:255',
+            'body' => 'required'
+        ]);
+        $incommingFields['title'] = strip_tags($incommingFields['title']);
+        $incommingFields['body'] = strip_tags($incommingFields['body']);
+        $incommingFields['user_id'] = auth()->id();
+
+        $newPost= Post::create($incommingFields);
+        dispatch(new sendNewPostEmail(['sendTo'=>auth()->user()->email,'name'=>auth()->user()->username,'title'=> $newPost->title]));
+        return $newPost->id;
+
+    }
+
 
     // view single post
     public function viewSinglePost(Post $post){
@@ -47,6 +65,11 @@ class PostController extends Controller
     public function deletePost(Post $post){
         $post->delete();
         return redirect('/profile/' . auth()->user()->username)->with('success', 'Post deleted successfully');
+    }
+
+    public function deletePostApi(Post $post){
+        $post->delete();
+        return 'Post deleted successfully';
     }
 
     //showEditForm

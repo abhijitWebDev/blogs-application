@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Post;
 use App\Models\User;
 use App\Models\Follow;
 use Illuminate\Http\Request;
@@ -8,6 +9,7 @@ use App\Events\OurExampleEvent;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\View;
 use Intervention\Image\ImageManager;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 
@@ -18,7 +20,13 @@ class UserController extends Controller
             return view('homepage-feed',['posts'=>auth()->user()->feedPosts()->latest()->paginate(4)]);
     }
     else {
-        return view('homepage');
+     
+        $postCount = Cache::remember('postCount', 20, function () {
+            return Post::count();
+        });
+        
+            
+        return view('homepage', ['postCount' => $postCount]);
     }
 }
     //
@@ -38,6 +46,20 @@ class UserController extends Controller
         auth()->login($user);
         
         return redirect('/')->with('success','Thank you for creating an account');
+    }
+
+    public function loginApi(Request $request){
+        $incomingFields = $request->validate([
+            'username' => ['required'],
+            'password' => ['required'],
+        ]);
+    
+        if(auth()->attempt(['username' => $incomingFields['username'], 'password' => $incomingFields['password']])){
+            $user = User::where('username', $incomingFields['username'])->first();
+            $token = $user->createToken('ourAppToken')->plainTextToken;
+            return $token;
+        }
+        return 'Sorry';
     }
 
     public function login(Request $request){
